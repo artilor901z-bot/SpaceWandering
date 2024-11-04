@@ -841,10 +841,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   meteorPrefab: {fileID: 1218999000184144965, guid: b5916b9ff9a6b8c4295726074c154917, type: 3}
   spawnInterval: 2
-  meteorSpeed: 1
+  meteorSpeed: 0.7
   maxMeteors: 3
   minMeteors: 1
-  destroyTime: 10
+  destroyTime: 15
   minSize: 0.5
   maxSize: 1.5
 --- !u!4 &1406966209
