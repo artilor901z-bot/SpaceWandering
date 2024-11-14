@@ -1005,6 +1005,10 @@ PrefabInstance:
       value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 7228446786950748506, guid: 6e05ff6dcfde27d4f96122866b4022e1, type: 3}
+      propertyPath: m_Material
+      value: 
+      objectReference: {fileID: 6200000, guid: 55b11f5d34f0ffd409314e49fce6de92, type: 2}
+    - target: {fileID: 7228446786950748506, guid: 6e05ff6dcfde27d4f96122866b4022e1, type: 3}
       propertyPath: m_GravityScale
       value: 0.03
       objectReference: {fileID: 0}
@@ -1062,7 +1066,8 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 1575453688269647774, guid: 6e05ff6dcfde27d4f96122866b4022e1, type: 3}
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 1820980619777090128, guid: 6e05ff6dcfde27d4f96122866b4022e1, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 7400578599671361200, guid: 6e05ff6dcfde27d4f96122866b4022e1, type: 3}
