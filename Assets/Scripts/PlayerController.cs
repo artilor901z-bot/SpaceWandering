@@ -1,121 +1,94 @@
-﻿using Cinemachine;
-using UnityEngine;
+﻿using UnityEngine;
+using System;
 
 public class PlayerController : MonoBehaviour
 {
-    public float jumpForce = 5.0f;
-    public float airControlForce = 2.0f;
-    public CinemachineVirtualCamera virtualCamera;
-    public GameObject boundaryMinObject; // 边界的最小值对象
-    public GameObject boundaryMaxObject; // 边界的最大值对象
-    public GameObject flipObject; // 用于反转的子对象
-    public GameObject handObject; // 玩家手部对象
-    public float handDistance = 1.0f; // 手部对象与玩家之间的距离
-    public Transform firePoint; // 发射点
-    public GameObject targetPositionObject; // 目标位置对象
+    public float moveForce = 10f;
+    public GameObject bulletPrefab;
+    public Transform bulletSpawn;
+    public Transform hand;
+    public Transform body;
+    public float maxBulletSize = 2f;
+    public float minBulletSize = 0.5f;
+    public float maxForce = 20f;
+    public float zoomSpeed = 0.5f;
+    public float bulletSizeGrowthRate = 1f;
+    public float bulletSpeed = 15f;
 
     private Rigidbody2D rb;
-    private Vector2 boundaryMin;
-    private Vector2 boundaryMax;
-    private bool cameraStoppedFollowing = false; // 摄像机是否停止跟随
-    [SerializeField]
-    private EnergyManager energyManager;
-    private ShootingController shootingController;
+    private float currentBulletSize = 0.1f;
+    private float currentForce;
+    private bool isCharging = false;
+    private Vector3 shootDirection; // 用于存储射击方向
+
+    // 定义一个事件来通知摄像头重置缩放
+    public static event Action OnShoot;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        // 设置正常的重力
-        rb.gravityScale = 0.001f;
-
-        // 获取边界的最小值和最大值
-        if (boundaryMinObject != null && boundaryMaxObject != null)
-        {
-            boundaryMin = boundaryMinObject.transform.position;
-            boundaryMax = boundaryMaxObject.transform.position;
-        }
-
-        energyManager = GetComponent<EnergyManager>();
-        shootingController = GetComponent<ShootingController>();
-        gameObject.AddComponent<AbsorptionController>(); // 添加吸收控制器
+        rb.gravityScale = 0;
+        rb.linearDamping = 1;
+        currentForce = moveForce;
     }
 
     void Update()
     {
-        // 检查玩家是否按下空格键
-        if (Input.GetKeyDown(KeyCode.Space) && energyManager.ConsumeEnergy(energyManager.energyConsumptionPerJump))
+        if (Input.GetMouseButtonDown(0))
         {
-            // 直接设置玩家的速度
-            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+            isCharging = true;
         }
 
-        // 在空中时应用小的推力来模拟移动
-        if (Input.GetKey(KeyCode.Space))
+        if (Input.GetMouseButtonUp(0))
         {
-            rb.AddForce(Vector2.up * airControlForce * Time.deltaTime, ForceMode2D.Force);
+            isCharging = false;
+
+            // 计算射击方向，确保每次射击方向固定
+            shootDirection = (hand.position - body.position).normalized;
+
+            Shoot();
+            currentBulletSize = 0.1f;
+            currentForce = moveForce;
         }
 
-        // 检查玩家是否超出边界
-        CheckBoundary();
+        if (isCharging)
+        {
+            currentBulletSize = Mathf.Min(maxBulletSize, currentBulletSize + Time.deltaTime * bulletSizeGrowthRate);
+            currentForce = Mathf.Min(maxForce, currentForce + Time.deltaTime * moveForce);
+        }
 
-        // 检查鼠标位置并改变玩家朝向
-        CheckMousePosition();
-
-        // 更新手部位置
         UpdateHandPosition();
     }
 
-    void CheckBoundary()
+    void Shoot()
     {
-        Vector3 playerPosition = transform.position;
+        // Instantiate bullet
+        GameObject bullet = Instantiate(bulletPrefab, bulletSpawn.position, Quaternion.identity);
+        bullet.GetComponent<Bullet>().initialSize = Vector3.one * Mathf.Max(minBulletSize, currentBulletSize);
 
-        // 检查玩家是否超出边界
-        if (playerPosition.x < boundaryMin.x || playerPosition.x > boundaryMax.x ||
-            playerPosition.y < boundaryMin.y || playerPosition.y > boundaryMax.y)
+        // 确保子弹具有 Rigidbody2D 组件
+        Rigidbody2D bulletRb = bullet.GetComponent<Rigidbody2D>();
+        if (bulletRb == null)
         {
-            if (!cameraStoppedFollowing)
-            {
-                // 停止摄像机跟随
-                virtualCamera.Follow = null;
-                cameraStoppedFollowing = true;
-            }
+            bulletRb = bullet.AddComponent<Rigidbody2D>();
         }
-        else
-        {
-            if (cameraStoppedFollowing)
-            {
-                // 恢复摄像机跟随
-                virtualCamera.Follow = transform;
-                cameraStoppedFollowing = false;
-            }
-        }
-    }
+        bulletRb.gravityScale = 0; // 确保子弹不受重力影响
+        bulletRb.linearVelocity = shootDirection * bulletSpeed; // 设置子弹速度为固定值
 
-    void CheckMousePosition()
-    {
-        Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        Vector3 localScale = flipObject.transform.localScale;
+        // Apply force to player in the opposite direction
+        rb.AddForce(-shootDirection * currentForce, ForceMode2D.Impulse);
 
-        if (mousePosition.x < transform.position.x)
-        {
-            // 鼠标在玩家左边，玩家朝向左
-            localScale.x = -Mathf.Abs(localScale.x);
-        }
-        else
-        {
-            // 鼠标在玩家右边，玩家朝向右
-            localScale.x = Mathf.Abs(localScale.x);
-        }
-
-        flipObject.transform.localScale = localScale;
+        // 触发事件通知摄像头重置缩放
+        OnShoot?.Invoke();
     }
 
     void UpdateHandPosition()
     {
+        // 更新 hand 的位置，但不改变 shootDirection
         Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        mousePosition.z = 0; // 确保 z 轴为 0
-        Vector3 direction = (mousePosition - flipObject.transform.position).normalized;
-        handObject.transform.position = flipObject.transform.position + direction * handDistance;
-        targetPositionObject.transform.position = handObject.transform.position; // 更新目标位置对象的位置
+        mousePosition.z = 0f;
+
+        Vector3 direction = (mousePosition - body.position).normalized;
+        hand.position = body.position + direction;
     }
 }
