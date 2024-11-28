@@ -332,3 +332,4 @@ MonoBehaviour:
   maxForce: 20
   zoomSpeed: 0.1
   bulletSizeGrowthRate: 1
+  bulletSpeed: 15
