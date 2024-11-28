@@ -19,6 +19,7 @@ public class PlayerController : MonoBehaviour
     private float currentBulletSize = 0.1f;
     private float currentForce;
     private bool isCharging = false;
+    private bool isRightClickHeld = false;
     private Vector3 shootDirection; // 用于存储射击方向
 
     // 定义一个事件来通知摄像头重置缩放
@@ -30,6 +31,14 @@ public class PlayerController : MonoBehaviour
         rb.gravityScale = 0;
         rb.linearDamping = 1;
         currentForce = moveForce;
+
+        // 确保 AbsorbController 的 hand 和 body 被正确设置
+        AbsorbController absorbController = GetComponent<AbsorbController>();
+        if (absorbController != null)
+        {
+            absorbController.hand = hand;
+            absorbController.body = body;
+        }
     }
 
     void Update()
@@ -57,9 +66,18 @@ public class PlayerController : MonoBehaviour
             currentForce = Mathf.Min(maxForce, currentForce + Time.deltaTime * moveForce);
         }
 
+        if (Input.GetMouseButtonDown(1))
+        {
+            isRightClickHeld = true;
+        }
+
+        if (Input.GetMouseButtonUp(1))
+        {
+            isRightClickHeld = false;
+        }
+
         UpdateHandPosition();
     }
-
     void Shoot()
     {
         // Instantiate bullet
@@ -81,7 +99,6 @@ public class PlayerController : MonoBehaviour
         // 触发事件通知摄像头重置缩放
         OnShoot?.Invoke();
     }
-
     void UpdateHandPosition()
     {
         // 更新 hand 的位置，但不改变 shootDirection
@@ -90,5 +107,13 @@ public class PlayerController : MonoBehaviour
 
         Vector3 direction = (mousePosition - body.position).normalized;
         hand.position = body.position + direction;
+    }
+
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        if (isRightClickHeld && other.CompareTag("Collectable"))
+        {
+            Destroy(other.gameObject);
+        }
     }
 }

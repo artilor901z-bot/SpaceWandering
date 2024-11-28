@@ -4,12 +4,15 @@ public class Bullet : MonoBehaviour
 {
     public float lifeTime = 2f;
     public Vector3 initialSize = Vector3.one; // 初始大小
-    public float damage = 10f; // 子弹伤害
+    public float baseDamage = 10f; // 基础伤害
     public float minShrinkFactor = 0.1f; // 最小缩小比例
+
+    private float damage;
 
     void Start()
     {
         transform.localScale = initialSize; // 设置初始大小
+        damage = baseDamage * transform.localScale.magnitude; // 根据大小调整伤害
         Destroy(gameObject, lifeTime);
     }
 
@@ -35,6 +38,7 @@ public class Bullet : MonoBehaviour
         {
             Destroy(targetTransform.gameObject);
         }
+
 
         // 销毁子弹
         Destroy(gameObject);

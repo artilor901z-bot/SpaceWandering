@@ -10,7 +10,7 @@ public class CameraFollow : MonoBehaviour
     public float initialZoom = 7.5f; // 初始缩放
 
     private Camera cam;
-    private bool isZoomingIn = false;
+    private bool isZoomingOut = false;
 
     void Start()
     {
@@ -37,21 +37,21 @@ public class CameraFollow : MonoBehaviour
 
         if (Input.GetMouseButtonDown(0))
         {
-            isZoomingIn = true;
+            isZoomingOut = true;
         }
 
         if (Input.GetMouseButtonUp(0))
         {
-            isZoomingIn = false;
+            isZoomingOut = false;
         }
 
-        if (isZoomingIn)
+        if (isZoomingOut)
         {
-            cam.orthographicSize = Mathf.Max(minZoom, cam.orthographicSize - zoomSpeed * Time.deltaTime);
+            cam.orthographicSize = Mathf.Min(maxZoom, cam.orthographicSize + zoomSpeed * Time.deltaTime);
         }
         else
         {
-            cam.orthographicSize = Mathf.Min(maxZoom, cam.orthographicSize + zoomSpeed * Time.deltaTime);
+            cam.orthographicSize = Mathf.Max(minZoom, cam.orthographicSize - zoomSpeed * Time.deltaTime);
         }
     }
 
