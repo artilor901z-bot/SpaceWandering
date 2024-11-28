@@ -45,4 +45,10 @@ public class RangedEnemy : MonoBehaviour
             }
         }
     }
+
+    void OnDestroy()
+    {
+        // 更新分数
+        GameManager.Instance.AddScore(10);
+    }
 }
