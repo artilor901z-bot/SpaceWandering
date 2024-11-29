@@ -27,10 +27,14 @@ public class MeleeEnemy : MonoBehaviour
         {
             // 对玩家造成伤害
             GameManager.Instance.TakeDamage(damage);
-            // 更新分数
-            GameManager.Instance.AddScore(10);
             // 销毁自己
             Destroy(gameObject);
         }
+    }
+
+    void OnDestroy()
+    {
+        // 更新分数
+        GameManager.Instance.AddScore(10);
     }
 }

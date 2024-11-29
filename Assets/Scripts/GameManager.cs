@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement; // 引入场景管理命名空间
 
 public class GameManager : MonoBehaviour
 {
@@ -16,6 +17,7 @@ public class GameManager : MonoBehaviour
     public Slider healthBar;
     public Slider packageBar; // 新增的弹药条
     public TextMeshProUGUI gameOverText;
+    public Button retryButton; // 新增的 Retry 按钮
     public AbsorbController absorbController; // 新增的 AbsorbController 引用
 
     void Awake()
@@ -39,6 +41,7 @@ public class GameManager : MonoBehaviour
         // 初始化 UI
         UpdateUI();
         gameOverText.gameObject.SetActive(false); // 初始隐藏Game Over文本
+        retryButton.gameObject.SetActive(false); // 初始隐藏 Retry 按钮
 
         // 禁用 Slider 的交互性
         healthBar.interactable = false;
@@ -49,17 +52,23 @@ public class GameManager : MonoBehaviour
         {
             absorbController.SetGameManager(this);
         }
+
+        // 设置 Retry 按钮的点击事件
+        retryButton.onClick.AddListener(RetryGame);
     }
 
     public void TakeDamage(int damage)
     {
         playerHealth -= damage;
+        Debug.Log($"Player took {damage} damage, current health: {playerHealth}");
         if (playerHealth <= 0)
         {
             playerHealth = 0;
             // 处理玩家死亡
             Debug.Log("Player Died");
+            gameOverText.text = $"Game Over\nFinal Score: {playerScore}"; // 显示Game Over文本和最终得分
             gameOverText.gameObject.SetActive(true); // 显示Game Over文本
+            retryButton.gameObject.SetActive(true); // 显示 Retry 按钮
         }
         UpdateUI();
     }
@@ -94,5 +103,10 @@ public class GameManager : MonoBehaviour
         packageText.text = "Ammo: " + currentAmmo; // 更新弹药文本
         healthBar.value = playerHealth; // 更新血条值
         packageBar.value = currentAmmo; // 更新弹药条值
+    }
+
+    public void RetryGame()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name); // 重新加载当前场景
     }
 }
