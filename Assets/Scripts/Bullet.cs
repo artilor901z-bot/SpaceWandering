@@ -39,7 +39,6 @@ public class Bullet : MonoBehaviour
             Destroy(targetTransform.gameObject);
         }
 
-
         // 销毁子弹
         Destroy(gameObject);
     }

@@ -29,7 +29,7 @@ public class PlayerController : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         rb.gravityScale = 0;
-        rb.linearDamping = 1;
+        rb.linearDamping = 1; // 使用 drag 而不是 linearDamping
         currentForce = moveForce;
 
         // 确保 AbsorbController 的 hand 和 body 被正确设置
@@ -43,6 +43,7 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+
         if (Input.GetMouseButtonDown(0))
         {
             isCharging = true;
@@ -55,7 +56,10 @@ public class PlayerController : MonoBehaviour
             // 计算射击方向，确保每次射击方向固定
             shootDirection = (hand.position - body.position).normalized;
 
-            Shoot();
+            if (GameManager.Instance.UseAmmo(isCharging ? 5 : 1)) // 检查弹药是否足够
+            {
+                Shoot();
+            }
             currentBulletSize = 0.1f;
             currentForce = moveForce;
         }
@@ -78,6 +82,7 @@ public class PlayerController : MonoBehaviour
 
         UpdateHandPosition();
     }
+
     void Shoot()
     {
         // Instantiate bullet
@@ -99,6 +104,7 @@ public class PlayerController : MonoBehaviour
         // 触发事件通知摄像头重置缩放
         OnShoot?.Invoke();
     }
+
     void UpdateHandPosition()
     {
         // 更新 hand 的位置，但不改变 shootDirection
