@@ -4,15 +4,11 @@ public class Bullet : MonoBehaviour
 {
     public float lifeTime = 2f;
     public Vector3 initialSize = Vector3.one; // 初始大小
-    public float baseDamage = 10f; // 基础伤害
-    public float minShrinkFactor = 0.1f; // 最小缩小比例
-
-    private float damage;
+    public float damage = 10f; // Damage value
 
     void Start()
     {
         transform.localScale = initialSize; // 设置初始大小
-        damage = baseDamage * transform.localScale.magnitude; // 根据大小调整伤害
         Destroy(gameObject, lifeTime);
     }
 
@@ -24,19 +20,24 @@ public class Bullet : MonoBehaviour
             return;
         }
 
-        // 获取碰撞对象的 Transform 组件
-        Transform targetTransform = collision.transform;
-
-        // 计算缩小比例，假设子弹的大小影响缩小比例
-        float shrinkFactor = Mathf.Max(transform.localScale.magnitude * 0.1f, minShrinkFactor);
-
-        // 缩小碰撞对象
-        targetTransform.localScale -= new Vector3(shrinkFactor, shrinkFactor, shrinkFactor);
-
-        // 如果碰撞对象的 scale 小于 1，则销毁碰撞对象
-        if (targetTransform.localScale.magnitude < 1f)
+        // 获取碰撞对象的 RangedEnemy 组件
+        RangedEnemy enemy = collision.gameObject.GetComponent<RangedEnemy>();
+        if (enemy != null)
         {
-            Destroy(targetTransform.gameObject);
+            // 对敌人造成伤害
+            enemy.TakeDamage(damage);
+
+            // 计算缩小比例，假设子弹的大小影响缩小比例
+            float shrinkFactor = Mathf.Max(transform.localScale.magnitude * 0.1f, 0.1f);
+
+            // 缩小敌人
+            enemy.transform.localScale -= new Vector3(shrinkFactor, shrinkFactor, shrinkFactor);
+
+            // 如果敌人的 scale 小于 1，则销毁敌人
+            if (enemy.transform.localScale.magnitude < 1f)
+            {
+                Destroy(enemy.gameObject);
+            }
         }
 
         // 销毁子弹

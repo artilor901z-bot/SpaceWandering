@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement; // 引入场景管理命名空间
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -9,22 +9,26 @@ public class GameManager : MonoBehaviour
 
     public int playerHealth = 100;
     public int playerScore = 0;
-    public int maxAmmo = 50; // 最大弹药数
-    public int currentAmmo = 20; // 初始弹药数
+    public int maxAmmo = 50;
+    public int currentAmmo = 20;
     public TextMeshProUGUI healthText;
     public TextMeshProUGUI scoreText;
-    public TextMeshProUGUI packageText; // 新增的弹药文本
+    public TextMeshProUGUI packageText;
     public Slider healthBar;
-    public Slider packageBar; // 新增的弹药条
+    public Slider packageBar;
     public TextMeshProUGUI gameOverText;
-    public Button retryButton; // 新增的 Retry 按钮
-    public AbsorbController absorbController; // 新增的 AbsorbController 引用
+    public Button retryButton;
+    public AbsorbController absorbController;
+
+    private bool isInvincible = false;
+    private float invincibilityEndTime;
 
     void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
+            Debug.Log("GameManager instance initialized.");
         }
         else
         {
@@ -34,42 +38,52 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        // 设置 healthBar 和 packageBar 的最大值
         healthBar.maxValue = playerHealth;
         packageBar.maxValue = maxAmmo;
 
-        // 初始化 UI
         UpdateUI();
-        gameOverText.gameObject.SetActive(false); // 初始隐藏Game Over文本
-        retryButton.gameObject.SetActive(false); // 初始隐藏 Retry 按钮
+        gameOverText.gameObject.SetActive(false);
+        retryButton.gameObject.SetActive(false);
 
-        // 禁用 Slider 的交互性
         healthBar.interactable = false;
-        packageBar.interactable = false; // 禁用弹药条的交互性
+        packageBar.interactable = false;
 
-        // 设置 AbsorbController 的 GameManager
         if (absorbController != null)
         {
             absorbController.SetGameManager(this);
         }
 
-        // 设置 Retry 按钮的点击事件
         retryButton.onClick.AddListener(RetryGame);
+    }
+
+    void Update()
+    {
+        if (isInvincible && Time.time > invincibilityEndTime)
+        {
+            isInvincible = false;
+        }
     }
 
     public void TakeDamage(int damage)
     {
+
         playerHealth -= damage;
         Debug.Log($"Player took {damage} damage, current health: {playerHealth}");
         if (playerHealth <= 0)
         {
             playerHealth = 0;
-            // 处理玩家死亡
             Debug.Log("Player Died");
-            gameOverText.text = $"Game Over\nFinal Score: {playerScore}"; // 显示Game Over文本和最终得分
-            gameOverText.gameObject.SetActive(true); // 显示Game Over文本
-            retryButton.gameObject.SetActive(true); // 显示 Retry 按钮
+            gameOverText.text = $"Game Over\nFinal Score: {playerScore}";
+            gameOverText.gameObject.SetActive(true);
+            retryButton.gameObject.SetActive(true);
         }
+        UpdateUI();
+    }
+
+    public void AddHealth(int amount)
+    {
+        playerHealth = Mathf.Min(playerHealth + amount, 100);
+        Debug.Log("Health added. Current health: " + playerHealth);
         UpdateUI();
     }
 
@@ -81,7 +95,7 @@ public class GameManager : MonoBehaviour
 
     public void AddAmmo(int ammo)
     {
-        currentAmmo = Mathf.Min(currentAmmo + ammo, maxAmmo); // 增加弹药并确保不超过最大值
+        currentAmmo = Mathf.Min(currentAmmo + ammo, maxAmmo);
         UpdateUI();
     }
 
@@ -96,17 +110,19 @@ public class GameManager : MonoBehaviour
         return false;
     }
 
+
     void UpdateUI()
     {
         healthText.text = "Health: " + playerHealth;
         scoreText.text = "Score: " + playerScore;
-        packageText.text = "Ammo: " + currentAmmo; // 更新弹药文本
-        healthBar.value = playerHealth; // 更新血条值
-        packageBar.value = currentAmmo; // 更新弹药条值
+        packageText.text = "Ammo: " + currentAmmo;
+        healthBar.value = playerHealth;
+        packageBar.value = currentAmmo;
     }
 
     public void RetryGame()
     {
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name); // 重新加载当前场景
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 }
+

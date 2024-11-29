@@ -7,6 +7,7 @@ public class RangedEnemy : MonoBehaviour
     public GameObject bulletPrefab;
     public Transform bulletSpawn;
     public int damage = 5;
+    public float health = 100f; // Add health property
 
     private Transform player;
     private float shootTimer;
@@ -43,6 +44,15 @@ public class RangedEnemy : MonoBehaviour
                 enemyBullet.Initialize(direction);
                 enemyBullet.damage = damage;
             }
+        }
+    }
+
+    public void TakeDamage(float damage)
+    {
+        health -= damage;
+        if (health <= 0f)
+        {
+            Destroy(gameObject);
         }
     }
 

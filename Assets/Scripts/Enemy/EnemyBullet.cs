@@ -24,7 +24,7 @@ public class EnemyBullet : MonoBehaviour
             GameManager.Instance.TakeDamage(damage);
             Destroy(gameObject);
         }
-        else if (other.CompareTag("Obstacle"))
+        else if (other.CompareTag("Collectable"))
         {
             Destroy(gameObject);
         }

@@ -59,14 +59,15 @@ public class AbsorbController : MonoBehaviour
         Vector3 direction = (body.position - collectable.transform.position).normalized;
         collectable.transform.position = Vector3.MoveTowards(collectable.transform.position, body.position, absorbSpeed * Time.deltaTime);
 
-        // 增加弹药
+        // 执行 collectable 的效果
         if (Vector3.Distance(collectable.transform.position, hand.position) < 1f)
         {
-            if (gameManager != null)
+            ICollectable collectableItem = collectable.GetComponent<ICollectable>();
+            if (collectableItem != null)
             {
-                gameManager.AddAmmo(5); // 每个 collectable 增加 5 弹药
+                collectableItem.Collect(gameObject);
+                gameManager.AddAmmo(5); // 吸收后增加5个子弹
             }
-            Destroy(collectable.gameObject);
         }
     }
 
@@ -76,3 +77,4 @@ public class AbsorbController : MonoBehaviour
         Gizmos.DrawWireSphere(body.position, absorbRadius);
     }
 }
+

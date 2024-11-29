@@ -14,6 +14,7 @@ public class PlayerController : MonoBehaviour
     public float zoomSpeed = 0.5f;
     public float bulletSizeGrowthRate = 1f;
     public float bulletSpeed = 15f;
+    public float maxBulletDamage = 20f; // Maximum bullet damage
 
     private Rigidbody2D rb;
     private float currentBulletSize = 0.1f;
@@ -21,6 +22,7 @@ public class PlayerController : MonoBehaviour
     private bool isCharging = false;
     private bool isRightClickHeld = false;
     private Vector3 shootDirection; // 用于存储射击方向
+    private bool tripleShotEnabled = false; // 是否启用三连发
 
     // 定义一个事件来通知摄像头重置缩放
     public static event Action OnShoot;
@@ -43,7 +45,6 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-
         if (Input.GetMouseButtonDown(0))
         {
             isCharging = true;
@@ -85,9 +86,35 @@ public class PlayerController : MonoBehaviour
 
     void Shoot()
     {
+        if (tripleShotEnabled)
+        {
+            // 三连发射击
+            for (int i = -1; i <= 1; i++)
+            {
+                Vector3 offset = new Vector3(i * 0.5f, 0, 0); // 调整子弹的偏移量
+                CreateBullet(bulletSpawn.position + offset);
+            }
+        }
+        else
+        {
+            // 单发射击
+            CreateBullet(bulletSpawn.position);
+        }
+
+        // Apply force to player in the opposite direction
+        rb.AddForce(-shootDirection * currentForce, ForceMode2D.Impulse);
+
+        // 触发事件通知摄像头重置缩放
+        OnShoot?.Invoke();
+    }
+
+    void CreateBullet(Vector3 position)
+    {
         // Instantiate bullet
-        GameObject bullet = Instantiate(bulletPrefab, bulletSpawn.position, Quaternion.identity);
-        bullet.GetComponent<Bullet>().initialSize = Vector3.one * Mathf.Max(minBulletSize, currentBulletSize);
+        GameObject bullet = Instantiate(bulletPrefab, position, Quaternion.identity);
+        Bullet bulletScript = bullet.GetComponent<Bullet>();
+        bulletScript.initialSize = Vector3.one * Mathf.Max(minBulletSize, currentBulletSize);
+        bulletScript.damage = Mathf.Lerp(10f, maxBulletDamage, (currentBulletSize - minBulletSize) / (maxBulletSize - minBulletSize)); // Set bullet damage based on size
 
         // 确保子弹具有 Rigidbody2D 组件
         Rigidbody2D bulletRb = bullet.GetComponent<Rigidbody2D>();
@@ -97,12 +124,6 @@ public class PlayerController : MonoBehaviour
         }
         bulletRb.gravityScale = 0; // 确保子弹不受重力影响
         bulletRb.linearVelocity = shootDirection * bulletSpeed; // 设置子弹速度为固定值
-
-        // Apply force to player in the opposite direction
-        rb.AddForce(-shootDirection * currentForce, ForceMode2D.Impulse);
-
-        // 触发事件通知摄像头重置缩放
-        OnShoot?.Invoke();
     }
 
     void UpdateHandPosition()
@@ -119,7 +140,23 @@ public class PlayerController : MonoBehaviour
     {
         if (isRightClickHeld && other.CompareTag("Collectable"))
         {
-            Destroy(other.gameObject);
+            ICollectable collectable = other.GetComponent<ICollectable>();
+            if (collectable != null)
+            {
+                collectable.Collect(gameObject);
+            }
         }
+    }
+
+    public void EnableTripleShot()
+    {
+        tripleShotEnabled = true;
+        // 设置一个计时器来在10秒后禁用三连发
+        Invoke("DisableTripleShot", 5f); // 10秒后禁用三连发
+    }
+
+    void DisableTripleShot()
+    {
+        tripleShotEnabled = false;
     }
 }
