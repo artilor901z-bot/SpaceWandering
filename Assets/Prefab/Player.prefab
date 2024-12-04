@@ -333,3 +333,4 @@ MonoBehaviour:
   zoomSpeed: 0.1
   bulletSizeGrowthRate: 1
   bulletSpeed: 15
+  maxBulletDamage: 20

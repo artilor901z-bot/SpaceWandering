@@ -104,8 +104,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   lifeTime: 2
   initialSize: {x: 0.13379, y: 0.13379, z: 0.13379}
-  baseDamage: 10
-  minShrinkFactor: 0.1
+  damage: 10
 --- !u!58 &-3912256902409946061
 CircleCollider2D:
   m_ObjectHideFlags: 0
