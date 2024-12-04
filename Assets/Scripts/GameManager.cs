@@ -21,6 +21,11 @@ public class GameManager : MonoBehaviour
     public AbsorbController absorbController;
     public string gameOverSceneName = "GameOverScene"; // 添加结束场景的名称
 
+    public AudioClip damageAudioClip; // 玩家受伤时的音频
+    public AudioClip scoreAudioClip; // 玩家加分时的音频
+    public AudioClip collectAudioClip; // 玩家收集物品时的音频
+    public AudioSource audioSource;
+
     private bool isInvincible = false;
     private float invincibilityEndTime;
     private float displayedHealth;
@@ -40,6 +45,8 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
+        audioSource = GetComponent<AudioSource>();
+
         healthBar.maxValue = playerHealth;
         packageBar.maxValue = maxAmmo;
 
@@ -75,6 +82,10 @@ public class GameManager : MonoBehaviour
     {
         playerHealth -= damage;
         Debug.Log($"Player took {damage} damage, current health: {playerHealth}");
+        if (damageAudioClip != null)
+        {
+            audioSource.PlayOneShot(damageAudioClip);
+        }
         if (playerHealth <= 0)
         {
             playerHealth = 0;
@@ -99,7 +110,7 @@ public class GameManager : MonoBehaviour
     {
         // 等待短暂时间（例如1秒）让玩家看到死亡画面
         yield return new WaitForSeconds(1f);
-        
+
         // 加载结束场景
         SceneManager.LoadScene(gameOverSceneName);
     }
@@ -114,12 +125,20 @@ public class GameManager : MonoBehaviour
     public void AddScore(int score)
     {
         playerScore += score;
+        if (scoreAudioClip != null)
+        {
+            audioSource.PlayOneShot(scoreAudioClip);
+        }
         UpdateUI();
     }
 
     public void AddAmmo(int ammo)
     {
         currentAmmo = Mathf.Min(currentAmmo + ammo, maxAmmo);
+        if (collectAudioClip != null)
+        {
+            audioSource.PlayOneShot(collectAudioClip);
+        }
         UpdateUI();
     }
 

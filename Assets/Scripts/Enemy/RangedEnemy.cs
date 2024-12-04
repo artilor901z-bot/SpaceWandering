@@ -8,14 +8,21 @@ public class RangedEnemy : MonoBehaviour
     public Transform bulletSpawn;
     public int damage = 5;
     public float health = 100f; // Add health property
+    public AudioClip shootSound; // 添加射击音效
+    [Range(0f, 1f)]
+    public float shootSoundVolume = 1f; // 添加音量控制
 
     private Transform player;
     private float shootTimer;
+    private AudioSource audioSource; // 添加音频源
 
     void Start()
     {
         player = GameObject.FindGameObjectWithTag("Player").transform;
         shootTimer = shootInterval;
+        audioSource = gameObject.AddComponent<AudioSource>(); // 初始化音频源
+        audioSource.playOnAwake = false;
+        audioSource.volume = shootSoundVolume;
     }
 
     void Update()
@@ -43,6 +50,12 @@ public class RangedEnemy : MonoBehaviour
             {
                 enemyBullet.Initialize(direction);
                 enemyBullet.damage = damage;
+            }
+
+            // 播放射击音效
+            if (shootSound != null && audioSource != null)
+            {
+                audioSource.PlayOneShot(shootSound, shootSoundVolume);
             }
         }
     }

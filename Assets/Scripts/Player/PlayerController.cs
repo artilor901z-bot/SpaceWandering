@@ -74,12 +74,6 @@ public class PlayerController : MonoBehaviour
         {
             isCharging = true;
             handAnimator?.PlayClickAnimation();
-            
-            // 播放射击音效
-            if (shootSound != null && audioSource != null)
-            {
-                audioSource.PlayOneShot(shootSound, shootSoundVolume);
-            }
         }
 
         if (Input.GetMouseButtonUp(0))
@@ -91,6 +85,13 @@ public class PlayerController : MonoBehaviour
             {
                 Shoot();
             }
+
+            // 播放射击音效
+            if (shootSound != null && audioSource != null)
+            {
+                audioSource.PlayOneShot(shootSound, shootSoundVolume);
+            }
+
             currentBulletSize = 0.1f;
             currentForce = moveForce;
         }
@@ -123,10 +124,10 @@ public class PlayerController : MonoBehaviour
 
         // 计算body应该旋转的目标角度
         float targetAngle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-        
+
         // 平滑旋转body
         bodyRotation = Mathf.LerpAngle(bodyRotation, targetAngle, Time.deltaTime * rotationSpeed);
-        
+
         // 更新body的位置和旋转（添加180度使sprite朝向正确）
         body.position = transform.position;
         body.rotation = Quaternion.Euler(0, 0, bodyRotation + 180f);
@@ -172,7 +173,7 @@ public class PlayerController : MonoBehaviour
             bulletRb = bullet.AddComponent<Rigidbody2D>();
         }
         bulletRb.gravityScale = 0;
-        
+
         // 使用body的方向作为射击方向
         Vector3 bulletDirection = Quaternion.Euler(0, 0, bodyRotation) * Vector3.right;
         bulletRb.linearVelocity = bulletDirection * bulletSpeed;
