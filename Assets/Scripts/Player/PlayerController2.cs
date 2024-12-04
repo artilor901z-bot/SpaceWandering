@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using System;
 
 public class PlayerController2 : MonoBehaviour
@@ -14,28 +14,27 @@ public class PlayerController2 : MonoBehaviour
     public float zoomSpeed = 0.5f;
     public float bulletSizeGrowthRate = 1f;
     public float bulletSpeed = 15f;
-    public float maxBulletDamage = 20f;
-    public float bodyRotationSpeed = 10f;
-    public float handRotationSpeed = 15f; // ÊÖ²¿Ğı×ªËÙ¶È
-    public float handDistance = 1f; // ÊÖ²¿¾àÀëÉíÌåµÄ¾àÀë
+    public float maxBulletDamage = 20f; // Maximum bullet damage
 
     private Rigidbody2D rb;
     private float currentBulletSize = 0.1f;
     private float currentForce;
     private bool isCharging = false;
     private bool isRightClickHeld = false;
-    private Vector3 shootDirection;
-    private bool tripleShotEnabled = false;
+    private Vector3 shootDirection; // ç”¨äºå­˜å‚¨å°„å‡»æ–¹å‘
+    private bool tripleShotEnabled = false; // æ˜¯å¦å¯ç”¨ä¸‰è¿å‘
 
+    // å®šä¹‰ä¸€ä¸ªäº‹ä»¶æ¥é€šçŸ¥æ‘„åƒå¤´é‡ç½®ç¼©æ”¾
     public static event Action OnShoot;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         rb.gravityScale = 0;
-        rb.linearDamping = 1;
+        rb.linearDamping = 1; // ä½¿ç”¨ drag è€Œä¸æ˜¯ linearDamping
         currentForce = moveForce;
 
+        // ç¡®ä¿ AbsorbController çš„ hand å’Œ body è¢«æ­£ç¡®è®¾ç½®
         AbsorbController absorbController = GetComponent<AbsorbController>();
         if (absorbController != null)
         {
@@ -54,9 +53,11 @@ public class PlayerController2 : MonoBehaviour
         if (Input.GetMouseButtonUp(0))
         {
             isCharging = false;
+
+            // è®¡ç®—å°„å‡»æ–¹å‘ï¼Œç¡®ä¿æ¯æ¬¡å°„å‡»æ–¹å‘å›ºå®š
             shootDirection = (hand.position - body.position).normalized;
 
-            if (GameManager.Instance.UseAmmo(isCharging ? 5 : 1))
+            if (GameManager.Instance.UseAmmo(isCharging ? 5 : 1)) // æ£€æŸ¥å¼¹è¯æ˜¯å¦è¶³å¤Ÿ
             {
                 Shoot();
             }
@@ -80,72 +81,59 @@ public class PlayerController2 : MonoBehaviour
             isRightClickHeld = false;
         }
 
-        UpdateRotationAndPosition();
-    }
-
-    void UpdateRotationAndPosition()
-    {
-        // »ñÈ¡Êó±êÊÀ½ç×ø±ê
-        Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        mousePosition.z = 0f;
-
-        // ¼ÆËã·½ÏòÏòÁ¿
-        Vector3 bodyToMouse = (mousePosition - body.position).normalized;
-
-        // ¸üĞÂÉíÌåĞı×ª
-        float bodyAngle = Mathf.Atan2(bodyToMouse.y, bodyToMouse.x) * Mathf.Rad2Deg;
-        Quaternion targetBodyRotation = Quaternion.Euler(0, 0, bodyAngle);
-        body.rotation = Quaternion.Lerp(body.rotation, targetBodyRotation, Time.deltaTime * bodyRotationSpeed);
-
-        // ¸üĞÂÊÖ²¿Î»ÖÃºÍĞı×ª
-        Vector3 handDirection = (mousePosition - body.position).normalized;
-        Vector3 targetHandPosition = body.position + handDirection * handDistance;
-
-        // Æ½»¬ÒÆ¶¯ÊÖ²¿Î»ÖÃ
-        hand.position = Vector3.Lerp(hand.position, targetHandPosition, Time.deltaTime * handRotationSpeed);
-
-        // ¸üĞÂÊÖ²¿³¯Ïò
-        float handAngle = Mathf.Atan2(handDirection.y, handDirection.x) * Mathf.Rad2Deg;
-        Quaternion targetHandRotation = Quaternion.Euler(0, 0, handAngle);
-        hand.rotation = Quaternion.Lerp(hand.rotation, targetHandRotation, Time.deltaTime * handRotationSpeed);
-
-        // ¸üĞÂÉä»÷·½Ïò
-        shootDirection = handDirection;
+        UpdateHandPosition();
     }
 
     void Shoot()
     {
         if (tripleShotEnabled)
         {
+            // ä¸‰è¿å‘å°„å‡»
             for (int i = -1; i <= 1; i++)
             {
-                Vector3 offset = new Vector3(i * 0.5f, 0, 0);
+                Vector3 offset = new Vector3(i * 0.5f, 0, 0); // è°ƒæ•´å­å¼¹çš„åç§»é‡
                 CreateBullet(bulletSpawn.position + offset);
             }
         }
         else
         {
+            // å•å‘å°„å‡»
             CreateBullet(bulletSpawn.position);
         }
 
+        // Apply force to player in the opposite direction
         rb.AddForce(-shootDirection * currentForce, ForceMode2D.Impulse);
+
+        // è§¦å‘äº‹ä»¶é€šçŸ¥æ‘„åƒå¤´é‡ç½®ç¼©æ”¾
         OnShoot?.Invoke();
     }
 
     void CreateBullet(Vector3 position)
     {
+        // Instantiate bullet
         GameObject bullet = Instantiate(bulletPrefab, position, Quaternion.identity);
         Bullet bulletScript = bullet.GetComponent<Bullet>();
         bulletScript.initialSize = Vector3.one * Mathf.Max(minBulletSize, currentBulletSize);
-        bulletScript.damage = Mathf.Lerp(10f, maxBulletDamage, (currentBulletSize - minBulletSize) / (maxBulletSize - minBulletSize));
+        bulletScript.damage = Mathf.Lerp(10f, maxBulletDamage, (currentBulletSize - minBulletSize) / (maxBulletSize - minBulletSize)); // Set bullet damage based on size
 
+        // ç¡®ä¿å­å¼¹å…·æœ‰ Rigidbody2D ç»„ä»¶
         Rigidbody2D bulletRb = bullet.GetComponent<Rigidbody2D>();
         if (bulletRb == null)
         {
             bulletRb = bullet.AddComponent<Rigidbody2D>();
         }
-        bulletRb.gravityScale = 0;
-        bulletRb.linearVelocity = shootDirection * bulletSpeed;
+        bulletRb.gravityScale = 0; // ç¡®ä¿å­å¼¹ä¸å—é‡åŠ›å½±å“
+        bulletRb.linearVelocity = shootDirection * bulletSpeed; // è®¾ç½®å­å¼¹é€Ÿåº¦ä¸ºå›ºå®šå€¼
+    }
+
+    void UpdateHandPosition()
+    {
+        // æ›´æ–° hand çš„ä½ç½®ï¼Œä½†ä¸æ”¹å˜ shootDirection
+        Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        mousePosition.z = 0f;
+
+        Vector3 direction = (mousePosition - body.position).normalized;
+        hand.position = body.position + direction;
     }
 
     void OnTriggerEnter2D(Collider2D other)
@@ -163,7 +151,8 @@ public class PlayerController2 : MonoBehaviour
     public void EnableTripleShot()
     {
         tripleShotEnabled = true;
-        Invoke("DisableTripleShot", 5f);
+        // è®¾ç½®ä¸€ä¸ªè®¡æ—¶å™¨æ¥åœ¨10ç§’åç¦ç”¨ä¸‰è¿å‘
+        Invoke("DisableTripleShot", 5f); // 10ç§’åç¦ç”¨ä¸‰è¿å‘
     }
 
     void DisableTripleShot()

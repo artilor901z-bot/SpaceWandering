@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: ea8aa628af14ea04f98b862997091323
+guid: 78447629ff1c8574386d1b73f609f9e1
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 4366615783700126329
-    second: astronauts topnew_0
+      213: -1955448553306655712
+    second: Background_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -152,13 +152,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: astronauts topnew_0
+      name: Background_0
       rect:
         serializedVersion: 2
-        x: 601
-        y: 284
-        width: 780
-        height: 472
+        x: 0
+        y: 0
+        width: 1002
+        height: 564
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -167,8 +167,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 97a5f028be5599c30800000000000000
-      internalID: 4366615783700126329
+      spriteID: 024fa93b6e9dcd4e0800000000000000
+      internalID: -1955448553306655712
       vertices: []
       indices: 
       edges: []
@@ -186,8 +186,7 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable:
-      astronauts topnew_0: 4366615783700126329
+    nameFileIdTable: {}
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

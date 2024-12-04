@@ -19,9 +19,11 @@ public class GameManager : MonoBehaviour
     public TextMeshProUGUI gameOverText;
     public Button retryButton;
     public AbsorbController absorbController;
+    public string gameOverSceneName = "GameOverScene"; // 添加结束场景的名称
 
     private bool isInvincible = false;
     private float invincibilityEndTime;
+    private float displayedHealth;
 
     void Awake()
     {
@@ -40,6 +42,8 @@ public class GameManager : MonoBehaviour
     {
         healthBar.maxValue = playerHealth;
         packageBar.maxValue = maxAmmo;
+
+        displayedHealth = playerHealth;
 
         UpdateUI();
         gameOverText.gameObject.SetActive(false);
@@ -62,22 +66,42 @@ public class GameManager : MonoBehaviour
         {
             isInvincible = false;
         }
+
+        displayedHealth = Mathf.Lerp(displayedHealth, playerHealth, Time.deltaTime * 5);
+        healthBar.value = displayedHealth;
     }
 
     public void TakeDamage(int damage)
     {
-
         playerHealth -= damage;
         Debug.Log($"Player took {damage} damage, current health: {playerHealth}");
         if (playerHealth <= 0)
         {
             playerHealth = 0;
             Debug.Log("Player Died");
-            gameOverText.text = $"Game Over\nFinal Score: {playerScore}";
-            gameOverText.gameObject.SetActive(true);
-            retryButton.gameObject.SetActive(true);
+            StartGameOver();
         }
         UpdateUI();
+    }
+
+    // 添加新方法处理游戏结束
+    private void StartGameOver()
+    {
+        // 保存最终分数，以便在结束场景显示
+        PlayerPrefs.SetInt("FinalScore", playerScore);
+        PlayerPrefs.Save();
+
+        // 使用协程来添加短暂延迟，让玩家看到死亡瞬间
+        StartCoroutine(GameOverSequence());
+    }
+
+    private System.Collections.IEnumerator GameOverSequence()
+    {
+        // 等待短暂时间（例如1秒）让玩家看到死亡画面
+        yield return new WaitForSeconds(1f);
+        
+        // 加载结束场景
+        SceneManager.LoadScene(gameOverSceneName);
     }
 
     public void AddHealth(int amount)
@@ -110,7 +134,6 @@ public class GameManager : MonoBehaviour
         return false;
     }
 
-
     void UpdateUI()
     {
         healthText.text = "Health: " + playerHealth;
@@ -125,4 +148,3 @@ public class GameManager : MonoBehaviour
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 }
-

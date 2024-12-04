@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System;
 
 public class PlayerController : MonoBehaviour
@@ -14,50 +14,80 @@ public class PlayerController : MonoBehaviour
     public float zoomSpeed = 0.5f;
     public float bulletSizeGrowthRate = 1f;
     public float bulletSpeed = 15f;
-    public float maxBulletDamage = 20f; // Maximum bullet damage
+    public float maxBulletDamage = 20f;
+    public float rotationSpeed = 5f;
+    public float handDistance = 1f;
 
+    [Header("音效设置")]
+    public AudioClip shootSound;
+    [Range(0f, 1f)]
+    public float shootSoundVolume = 1f;
+
+    private AudioSource audioSource;
     private Rigidbody2D rb;
     private float currentBulletSize = 0.1f;
     private float currentForce;
     private bool isCharging = false;
     private bool isRightClickHeld = false;
-    private Vector3 shootDirection; // 用于存储射击方向
-    private bool tripleShotEnabled = false; // 是否启用三连发
+    private Vector3 shootDirection;
+    private bool tripleShotEnabled = false;
+    private float bodyRotation = 0f;
+    private HandAnimator handAnimator;
 
-    // 定义一个事件来通知摄像头重置缩放
     public static event Action OnShoot;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         rb.gravityScale = 0;
-        rb.linearDamping = 1; // 使用 drag 而不是 linearDamping
+        rb.linearDamping = 1;
         currentForce = moveForce;
 
-        // 确保 AbsorbController 的 hand 和 body 被正确设置
         AbsorbController absorbController = GetComponent<AbsorbController>();
         if (absorbController != null)
         {
             absorbController.hand = hand;
             absorbController.body = body;
         }
+
+        handAnimator = hand.GetComponent<HandAnimator>();
+        if (handAnimator == null)
+        {
+            Debug.LogError("HandAnimator component missing on hand object!");
+        }
+
+        // 初始化音频源
+        audioSource = gameObject.AddComponent<AudioSource>();
+        audioSource.playOnAwake = false;
+        audioSource.volume = shootSoundVolume;
     }
 
     void Update()
     {
+        HandleInput();
+        UpdateHandAndBodyPosition();
+    }
+
+    void HandleInput()
+    {
         if (Input.GetMouseButtonDown(0))
         {
             isCharging = true;
+            handAnimator?.PlayClickAnimation();
+            
+            // 播放射击音效
+            if (shootSound != null && audioSource != null)
+            {
+                audioSource.PlayOneShot(shootSound, shootSoundVolume);
+            }
         }
 
         if (Input.GetMouseButtonUp(0))
         {
             isCharging = false;
-
-            // 计算射击方向，确保每次射击方向固定
             shootDirection = (hand.position - body.position).normalized;
 
-            if (GameManager.Instance.UseAmmo(isCharging ? 5 : 1)) // 检查弹药是否足够
+            if (GameManager.Instance.UseAmmo(isCharging ? 5 : 1))
             {
                 Shoot();
             }
@@ -80,60 +110,72 @@ public class PlayerController : MonoBehaviour
         {
             isRightClickHeld = false;
         }
+    }
 
-        UpdateHandPosition();
+    void UpdateHandAndBodyPosition()
+    {
+        // 获取鼠标位置
+        Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        mousePosition.z = 0f;
+
+        // 计算方向
+        Vector3 direction = (mousePosition - transform.position).normalized;
+
+        // 计算body应该旋转的目标角度
+        float targetAngle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        
+        // 平滑旋转body
+        bodyRotation = Mathf.LerpAngle(bodyRotation, targetAngle, Time.deltaTime * rotationSpeed);
+        
+        // 更新body的位置和旋转（添加180度使sprite朝向正确）
+        body.position = transform.position;
+        body.rotation = Quaternion.Euler(0, 0, bodyRotation + 180f);
+
+        // 更新hand的位置 - 在body前方固定距离
+        Vector3 handOffset = Quaternion.Euler(0, 0, bodyRotation) * Vector3.right * handDistance;
+        hand.position = body.position + handOffset;
+        hand.rotation = Quaternion.Euler(0, 0, bodyRotation); // 手的旋转保持原样，不需要加180度
+
+        // 更新bulletSpawn的位置为手的位置
+        bulletSpawn.position = hand.position;
     }
 
     void Shoot()
     {
         if (tripleShotEnabled)
         {
-            // 三连发射击
             for (int i = -1; i <= 1; i++)
             {
-                Vector3 offset = new Vector3(i * 0.5f, 0, 0); // 调整子弹的偏移量
+                Vector3 offset = Quaternion.Euler(0, 0, bodyRotation) * new Vector3(0, i * 0.5f, 0);
                 CreateBullet(bulletSpawn.position + offset);
             }
         }
         else
         {
-            // 单发射击
             CreateBullet(bulletSpawn.position);
         }
 
-        // Apply force to player in the opposite direction
         rb.AddForce(-shootDirection * currentForce, ForceMode2D.Impulse);
-
-        // 触发事件通知摄像头重置缩放
         OnShoot?.Invoke();
     }
 
     void CreateBullet(Vector3 position)
     {
-        // Instantiate bullet
-        GameObject bullet = Instantiate(bulletPrefab, position, Quaternion.identity);
+        GameObject bullet = Instantiate(bulletPrefab, position, Quaternion.Euler(0, 0, bodyRotation));
         Bullet bulletScript = bullet.GetComponent<Bullet>();
         bulletScript.initialSize = Vector3.one * Mathf.Max(minBulletSize, currentBulletSize);
-        bulletScript.damage = Mathf.Lerp(10f, maxBulletDamage, (currentBulletSize - minBulletSize) / (maxBulletSize - minBulletSize)); // Set bullet damage based on size
+        bulletScript.damage = Mathf.Lerp(10f, maxBulletDamage, (currentBulletSize - minBulletSize) / (maxBulletSize - minBulletSize));
 
-        // 确保子弹具有 Rigidbody2D 组件
         Rigidbody2D bulletRb = bullet.GetComponent<Rigidbody2D>();
         if (bulletRb == null)
         {
             bulletRb = bullet.AddComponent<Rigidbody2D>();
         }
-        bulletRb.gravityScale = 0; // 确保子弹不受重力影响
-        bulletRb.linearVelocity = shootDirection * bulletSpeed; // 设置子弹速度为固定值
-    }
-
-    void UpdateHandPosition()
-    {
-        // 更新 hand 的位置，但不改变 shootDirection
-        Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        mousePosition.z = 0f;
-
-        Vector3 direction = (mousePosition - body.position).normalized;
-        hand.position = body.position + direction;
+        bulletRb.gravityScale = 0;
+        
+        // 使用body的方向作为射击方向
+        Vector3 bulletDirection = Quaternion.Euler(0, 0, bodyRotation) * Vector3.right;
+        bulletRb.linearVelocity = bulletDirection * bulletSpeed;
     }
 
     void OnTriggerEnter2D(Collider2D other)
@@ -151,8 +193,7 @@ public class PlayerController : MonoBehaviour
     public void EnableTripleShot()
     {
         tripleShotEnabled = true;
-        // 设置一个计时器来在10秒后禁用三连发
-        Invoke("DisableTripleShot", 5f); // 10秒后禁用三连发
+        Invoke("DisableTripleShot", 5f);
     }
 
     void DisableTripleShot()
