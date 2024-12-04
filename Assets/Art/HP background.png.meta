@@ -186,7 +186,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      HP background_0: 769797488329675394
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

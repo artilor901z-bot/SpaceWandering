@@ -186,7 +186,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      oxygenbottle_0: 8460827518259291090
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
